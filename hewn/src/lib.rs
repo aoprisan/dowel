@@ -116,6 +116,7 @@
 //! through a `Handles<C>` trait (static, monomorphized — no command bus), and
 //! `examples/axum_07.rs` for the pre-0.8 `#[async_trait]` form.
 
+#![no_std]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![forbid(unsafe_code)]
 
@@ -147,3 +148,37 @@ pub trait Wire<Ctx> {
 
 #[cfg(feature = "derive")]
 pub use hewn_macros::Wire;
+
+/// Derive [`Wire`] leaf impls for every named field of a context struct.
+///
+/// The composition root owns one concrete context whose fields are the leaf
+/// handles. `#[derive(Context)]` generates, for each field, the
+/// `impl Wire<Ctx> for FieldType` that clones the field out of the context —
+/// exactly the hand-written leaf impl, without the boilerplate.
+///
+/// - `#[context(skip)]` omits a field (config primitives, or to dodge a
+///   duplicate-type collision).
+/// - Two non-skipped fields of the same type are a compile error: they would
+///   produce conflicting `Wire` impls. Annotate one with `#[context(skip)]`.
+///
+/// ```
+/// use hewn::{Wire, Context};
+///
+/// #[derive(Clone)]
+/// struct Db { url: &'static str }
+/// #[derive(Clone, Copy)]
+/// struct Clock;
+///
+/// #[derive(Context)]
+/// struct AppCtx { db: Db, clock: Clock }
+///
+/// #[derive(Wire)]
+/// struct Repo { db: Db, clock: Clock }
+///
+/// let ctx = AppCtx { db: Db { url: "pg://" }, clock: Clock };
+/// let repo = Repo::wire(&ctx);
+/// assert_eq!(repo.db.url, "pg://");
+/// ```
+#[cfg(feature = "derive")]
+pub use hewn_macros::Context;
+

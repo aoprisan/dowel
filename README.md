@@ -49,10 +49,40 @@ Every plain field type `F` gets a `where F: Wire<Ctx>` bound, so a forgotten lea
 impl is a compile error at the wiring site:
 
 ```text
-error[E0277]: the trait bound `Db: Wire<AppCtx>` is not satisfied
+error[E0599]: the function or associated item `wire` exists for struct `PlayerRepo`,
+              but its trait bounds were not satisfied
+   = note: trait bound `Db: Wire<AppCtx>` was not satisfied
 ```
 
 That is the intended repair signal — add the leaf impl, don't paper over it.
+
+## Teaching the context its leaves
+
+Writing one `impl Wire<AppCtx>` per leaf by hand gets repetitive. `#[derive(Context)]`
+generates them — one `impl Wire<AppCtx> for FieldType` per field, cloning the field
+out of the context:
+
+```rust
+use hewn::{Wire, Context};
+
+#[derive(Clone)]
+struct Db { url: &'static str }
+#[derive(Clone, Copy)]
+struct Clock;
+
+#[derive(Context)]
+struct AppCtx { db: Db, clock: Clock }
+
+#[derive(Wire)]
+struct PlayerRepo { db: Db, clock: Clock }
+
+let ctx = AppCtx { db: Db { url: "pg://" }, clock: Clock };
+let repo = PlayerRepo::wire(&ctx);
+```
+
+- `#[context(skip)]` omits a field (config primitives, or to dodge a duplicate type).
+- Two non-skipped fields of the same type are a compile error — they would produce
+  conflicting `Wire` impls; annotate one with `#[context(skip)]` and wire it by hand.
 
 ## axum
 

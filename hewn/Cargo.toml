@@ -15,7 +15,12 @@ hewn-macros = { workspace = true }
 
 [dev-dependencies]
 trybuild = "1"
+# The default/recommended examples track the latest axum (native `async fn`
+# trait). `axum_07` keeps the pre-0.8 `#[async_trait]` form alive for consumers
+# still on 0.7; it is pulled in under a renamed package so both lines coexist.
 axum = "0.8"
+axum07 = { package = "axum", version = "0.7" }
+async-trait = "0.1"
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 
 [[example]]
@@ -24,6 +29,10 @@ required-features = ["derive"]
 
 [[example]]
 name = "axum_cqrs"
+required-features = ["derive"]
+
+[[example]]
+name = "axum_07"
 required-features = ["derive"]
 
 [features]

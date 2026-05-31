@@ -98,10 +98,12 @@ async fn get_player(Wired(repo): Wired<PlayerRepo>, Path(id): Path<PlayerId>) ->
   with axum's blankets never materializes. We still keep it out of the facade on
   purpose: vendoring it would add an `axum` (framework) dependency and pin one
   axum major line, breaking the "facade has zero deps beyond the macro re-export"
-  invariant. The canonical shape lives in `examples/axum.rs` (extractor) and
-  `examples/axum_cqrs.rs` (extractor + CQRS). If a second consumer ever needs it
-  installable, ship it as a separate `hewn-axum` companion crate that owns the
-  axum-version coupling — never the facade.
+  invariant. The canonical shape lives in `examples/axum.rs` (extractor, latest
+  axum), `examples/axum_cqrs.rs` (extractor + CQRS), and `examples/axum_07.rs` (the
+  pre-0.8 `#[async_trait]` form). The 0.7 example pulls axum in under a renamed
+  package (`axum07 = { package = "axum", version = "0.7" }`) so both lines coexist
+  in dev-deps. If a second consumer ever needs it installable, ship it as a separate
+  `hewn-axum` companion crate that owns the axum-version coupling — never the facade.
 
 ## Known-unverified spots (verify with `cargo check`, do not assume)
 

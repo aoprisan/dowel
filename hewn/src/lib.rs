@@ -112,8 +112,9 @@
 //!
 //! See the crate `README` and `examples/axum.rs` for the `Wired<S>` extractor
 //! pattern used to declare a dependency directly in an axum handler signature,
-//! and `examples/axum_cqrs.rs` for that same pattern plus direct CQRS dispatch
-//! through a `Handles<C>` trait (static, monomorphized — no command bus).
+//! `examples/axum_cqrs.rs` for that same pattern plus direct CQRS dispatch
+//! through a `Handles<C>` trait (static, monomorphized — no command bus), and
+//! `examples/axum_07.rs` for the pre-0.8 `#[async_trait]` form.
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![forbid(unsafe_code)]

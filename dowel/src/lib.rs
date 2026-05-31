@@ -113,6 +113,9 @@
 //! - Tuple structs expand identically using positional initializers
 //!   (`Self(<F0 as Wire<__Ctx>>::wire(__ctx), ...)`).
 //!
+//! `examples/attributes.rs` is a plain (non-web) composition root that puts
+//! every field attribute and the `[T; N]` impl side by side in one `main`.
+//!
 //! See the crate `README` and `examples/axum.rs` for the `Wired<S>` extractor
 //! pattern used to declare a dependency directly in an axum handler signature,
 //! `examples/axum_cqrs.rs` for that same pattern plus direct CQRS dispatch

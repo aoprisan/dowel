@@ -1,7 +1,7 @@
-# CLAUDE.md — `hewn`
+# CLAUDE.md — `dowel`
 
 Zero-cost compile-time dependency wiring for Rust. This file governs both how
-`hewn` itself is built and how consuming code (e.g. Dead City) must use it.
+`dowel` itself is built and how consuming code (e.g. Dead City) must use it.
 
 ## What this crate is
 
@@ -80,7 +80,7 @@ async fn get_player(Wired(repo): Wired<PlayerRepo>, Path(id): Path<PlayerId>) ->
 }
 ```
 
-## When generating code that USES hewn
+## When generating code that USES dowel
 
 - Adding a dependency is always the same edit: add a field (service) or a
   `Wired<X>` parameter (handler). Never a new wiring decision.
@@ -88,9 +88,9 @@ async fn get_player(Wired(repo): Wired<PlayerRepo>, Path(id): Path<PlayerId>) ->
   is not satisfied`. That is intended — add the leaf impl, do not paper over it.
 - Do not introduce `Arc<dyn>`, a runtime registry, or a `new()` that re-wires.
 
-## Crate development (working on hewn itself)
+## Crate development (working on dowel itself)
 
-- Workspace: `hewn` (facade) + `hewn-macros` (proc-macro: syn 2 / quote / proc-macro2).
+- Workspace: `dowel` (facade) + `dowel-macros` (proc-macro: syn 2 / quote / proc-macro2).
 - Edition 2021, stable only. No async in the wiring path.
 - Facade crate has zero deps beyond the macro re-export.
 - Every change must pass: `cargo check`, `cargo test`, `cargo clippy -- -D warnings`.
@@ -113,7 +113,7 @@ async fn get_player(Wired(repo): Wired<PlayerRepo>, Path(id): Path<PlayerId>) ->
   pre-0.8 `#[async_trait]` form). The 0.7 example pulls axum in under a renamed
   package (`axum07 = { package = "axum", version = "0.7" }`) so both lines coexist
   in dev-deps. If a second consumer ever needs it installable, ship it as a separate
-  `hewn-axum` companion crate that owns the axum-version coupling — never the facade.
+  `dowel-axum` companion crate that owns the axum-version coupling — never the facade.
 
 ## Known-unverified spots (verify with `cargo check`, do not assume)
 
@@ -122,7 +122,7 @@ async fn get_player(Wired(repo): Wired<PlayerRepo>, Path(id): Path<PlayerId>) ->
   concrete type (`PlayerService: Handles<CreatePlayer>`), which is static and
   monomorphized. A dynamic bus boundary is the only case that would need
   `#[async_trait]` or `Pin<Box<dyn Future>>`, and rule 6 says don't default to one.
-- `hewn` name availability on crates.io is unconfirmed. Check before publishing.
+- `dowel` name availability on crates.io is unconfirmed. Check before publishing.
 
 ## Tone for this repo
 

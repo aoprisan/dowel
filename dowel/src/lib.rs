@@ -1,4 +1,4 @@
-//! # hewn
+//! # dowel
 //!
 //! Zero-cost compile-time dependency wiring for Rust. One trait, one derive, one
 //! way to express a dependency. There is no container, no `TypeId`, no dynamic
@@ -8,7 +8,7 @@
 //! generates the [`Wire`] impl that wires each field from a context.
 //!
 //! ```
-//! use hewn::Wire;
+//! use dowel::Wire;
 //!
 //! // The composition root owns one concrete context.
 //! struct AppCtx { db: Db }
@@ -36,7 +36,7 @@
 //! threads the same `&ctx` all the way down.
 //!
 //! ```
-//! use hewn::Wire;
+//! use dowel::Wire;
 //!
 //! struct AppCtx { db: Db, clock: Clock }
 //!
@@ -78,17 +78,17 @@
 //! the macro expands to (modulo hygiene):
 //!
 //! ```ignore
-//! impl<__Ctx, T> hewn::Wire<__Ctx> for PlayerService<T>
+//! impl<__Ctx, T> dowel::Wire<__Ctx> for PlayerService<T>
 //! where
-//!     PlayerRepo: hewn::Wire<__Ctx>,
-//!     T: hewn::Wire<__Ctx>,
+//!     PlayerRepo: dowel::Wire<__Ctx>,
+//!     T: dowel::Wire<__Ctx>,
 //! {
 //!     fn wire(__ctx: &__Ctx) -> Self {
 //!         Self {
-//!             repo: <PlayerRepo as hewn::Wire<__Ctx>>::wire(__ctx),
+//!             repo: <PlayerRepo as dowel::Wire<__Ctx>>::wire(__ctx),
 //!             cache: ::core::default::Default::default(), // #[wire(skip)]
 //!             clock: make_clock(__ctx),                   // #[wire(with = ..)]
-//!             extra: <T as hewn::Wire<__Ctx>>::wire(__ctx),
+//!             extra: <T as dowel::Wire<__Ctx>>::wire(__ctx),
 //!         }
 //!     }
 //! }
@@ -127,7 +127,7 @@
 /// fields are themselves `Wire<Ctx>`.
 ///
 /// ```
-/// use hewn::Wire;
+/// use dowel::Wire;
 ///
 /// struct Ctx { name: String }
 ///
@@ -147,7 +147,7 @@ pub trait Wire<Ctx> {
 }
 
 #[cfg(feature = "derive")]
-pub use hewn_macros::Wire;
+pub use dowel_macros::Wire;
 
 /// Derive [`Wire`] leaf impls for every named field of a context struct.
 ///
@@ -162,7 +162,7 @@ pub use hewn_macros::Wire;
 ///   produce conflicting `Wire` impls. Annotate one with `#[context(skip)]`.
 ///
 /// ```
-/// use hewn::{Wire, Context};
+/// use dowel::{Wire, Context};
 ///
 /// #[derive(Clone)]
 /// struct Db { url: &'static str }
@@ -180,5 +180,5 @@ pub use hewn_macros::Wire;
 /// assert_eq!(repo.db.url, "pg://");
 /// ```
 #[cfg(feature = "derive")]
-pub use hewn_macros::Context;
+pub use dowel_macros::Context;
 

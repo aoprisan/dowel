@@ -3,7 +3,7 @@
 // generic over the context; any bound it needs (here `Seed: Wire<C>`) must be
 // satisfiable from the struct's own wired fields — `seed` below supplies exactly
 // that bound on the generated impl.
-use hewn::Wire;
+use dowel::Wire;
 
 struct Ctx {
     seed: u64,

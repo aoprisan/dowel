@@ -1,7 +1,7 @@
-//! Derive macro for the `hewn` dependency-wiring convention.
+//! Derive macro for the `dowel` dependency-wiring convention.
 //!
-//! See the `hewn` crate for the documented expansion. This crate is an
-//! implementation detail; depend on `hewn`, not on `hewn-macros`.
+//! See the `dowel` crate for the documented expansion. This crate is an
+//! implementation detail; depend on `dowel`, not on `dowel-macros`.
 
 use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;
@@ -10,14 +10,14 @@ use syn::{
     parse_macro_input, parse_quote, Data, DeriveInput, Error, Fields, GenericParam, Path, Type,
 };
 
-/// Derive `hewn::Wire<__Ctx>` for a struct.
+/// Derive `dowel::Wire<__Ctx>` for a struct.
 ///
 /// Each field is wired from the context unless annotated:
 /// - `#[wire(skip)]` — construct with `Default::default()`, add no bound.
 /// - `#[wire(with = path)]` — construct with `path(ctx)`, add no bound.
 ///
-/// Every plain field type `F` gets a `where F: hewn::Wire<__Ctx>` bound, so a
-/// missing leaf impl is a compile error at the wiring site. See the `hewn`
+/// Every plain field type `F` gets a `where F: dowel::Wire<__Ctx>` bound, so a
+/// missing leaf impl is a compile error at the wiring site. See the `dowel`
 /// crate docs for the full expansion.
 #[proc_macro_derive(Wire, attributes(wire))]
 pub fn derive_wire(input: TokenStream) -> TokenStream {
@@ -70,7 +70,7 @@ fn expand(input: DeriveInput) -> Result<TokenStream2, Error> {
             let ty: &Type = &field.ty;
             where_clause
                 .predicates
-                .push(parse_quote!(#ty: ::hewn::Wire<__Ctx>));
+                .push(parse_quote!(#ty: ::dowel::Wire<__Ctx>));
         }
         modes.push(mode);
     }
@@ -94,7 +94,7 @@ fn expand(input: DeriveInput) -> Result<TokenStream2, Error> {
 
     Ok(quote! {
         #[automatically_derived]
-        impl #impl_generics ::hewn::Wire<__Ctx> for #name #ty_generics #where_clause {
+        impl #impl_generics ::dowel::Wire<__Ctx> for #name #ty_generics #where_clause {
             fn wire(__ctx: &__Ctx) -> Self {
                 #body
             }
@@ -128,7 +128,7 @@ fn build_body(fields: &Fields, modes: &[FieldMode]) -> TokenStream2 {
 /// The initializer expression for one field given its mode.
 fn init_expr(ty: &Type, mode: &FieldMode) -> TokenStream2 {
     match mode {
-        FieldMode::Wire => quote!(<#ty as ::hewn::Wire<__Ctx>>::wire(__ctx)),
+        FieldMode::Wire => quote!(<#ty as ::dowel::Wire<__Ctx>>::wire(__ctx)),
         FieldMode::Skip => quote!(::core::default::Default::default()),
         FieldMode::With(path) => quote!(#path(__ctx)),
     }
@@ -178,9 +178,9 @@ fn set_mode(
 }
 
 
-/// Derive `hewn::Wire<Ctx>` for each named field type of a context struct.
+/// Derive `dowel::Wire<Ctx>` for each named field type of a context struct.
 ///
-/// See the `hewn` crate docs for the documented expansion. Generates, per
+/// See the `dowel` crate docs for the documented expansion. Generates, per
 /// field, the leaf `impl Wire<Ctx> for FieldType` that clones the field out of
 /// the context. `#[context(skip)]` omits a field; two non-skipped fields of the
 /// same type are a compile error (they would produce conflicting impls).
@@ -253,7 +253,7 @@ fn expand_context(input: DeriveInput) -> Result<TokenStream2, Error> {
 
         impls.push(quote! {
             #[automatically_derived]
-            impl #impl_generics ::hewn::Wire<#name #ty_generics> for #ty #where_clause {
+            impl #impl_generics ::dowel::Wire<#name #ty_generics> for #ty #where_clause {
                 fn wire(__ctx: &#name #ty_generics) -> Self {
                     ::core::clone::Clone::clone(&__ctx.#ident)
                 }

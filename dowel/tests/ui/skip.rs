@@ -1,6 +1,6 @@
 // `#[wire(skip)]` uses Default::default() and adds no Wire bound, so the field
 // type need not be Wire<Ctx> at all.
-use hewn::Wire;
+use dowel::Wire;
 
 struct Ctx;
 

@@ -25,7 +25,7 @@ use axum::{
     routing::post,
     Router,
 };
-use hewn::Wire;
+use dowel::Wire;
 
 // ---------------------------------------------------------------------------
 // Leaf + context. The axum State *is* the composition root.

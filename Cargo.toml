@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["hewn", "hewn-macros"]
+members = ["dowel", "dowel-macros"]
 
 [workspace.package]
 edition = "2021"
@@ -9,7 +9,7 @@ repository = "https://github.com/aoprisan/hewn"
 rust-version = "1.70"
 
 [workspace.dependencies]
-hewn-macros = { path = "hewn-macros", version = "0.1.0" }
+dowel-macros = { path = "dowel-macros", version = "0.1.0" }
 syn = { version = "2", features = ["full"] }
 quote = "1"
 proc-macro2 = "1"

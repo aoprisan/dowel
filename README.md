@@ -1,4 +1,4 @@
-# hewn
+# dowel
 
 Zero-cost compile-time dependency wiring for Rust. One trait, one derive, one
 way to express a dependency. No container, no `TypeId`, no dynamic dispatch — the
@@ -14,7 +14,7 @@ A *service* is a struct. Its *dependencies* are its fields. `#[derive(Wire)]`
 generates the impl that wires each field from a context.
 
 ```rust
-use hewn::Wire;
+use dowel::Wire;
 
 // The composition root owns one concrete context.
 struct AppCtx { db: Db }
@@ -63,7 +63,7 @@ generates them — one `impl Wire<AppCtx> for FieldType` per field, cloning the 
 out of the context:
 
 ```rust
-use hewn::{Wire, Context};
+use dowel::{Wire, Context};
 
 #[derive(Clone)]
 struct Db { url: &'static str }

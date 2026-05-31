@@ -2,7 +2,7 @@
 //! service wires straight from the context with no hand-written leaf impls.
 //! `#[context(skip)]` keeps a non-leaf field out of the wiring.
 
-use hewn::{Context, Wire};
+use dowel::{Context, Wire};
 
 #[derive(Clone)]
 struct Db {

@@ -24,7 +24,7 @@ use axum::{
     routing::get,
     Router,
 };
-use hewn::Wire;
+use dowel::Wire;
 
 // ---------------------------------------------------------------------------
 // The leaf and the context. The axum State *is* the context, so the leaf is

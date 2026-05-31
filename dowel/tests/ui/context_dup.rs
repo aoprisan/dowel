@@ -2,7 +2,7 @@
 //! `Wire` impls. `#[derive(Context)]` rejects that with a readable message
 //! pointing at the duplicate field (skip one and wire it by hand instead).
 
-use hewn::Context;
+use dowel::Context;
 
 #[derive(Clone)]
 struct Db {

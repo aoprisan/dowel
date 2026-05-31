@@ -1,19 +1,19 @@
-//! `Wired<S>` — declare a dependency directly in an axum handler signature.
+//! `Wired<S>` on **pre-0.8 axum (0.7)** — the `#[async_trait]` form.
 //!
-//! The axum `State` *is* the composition root: it holds the one concrete
-//! context. `Wired<S>` is an extractor that calls `S::wire(state)` for any
-//! service `S: Wire<State>`, so a handler asks for exactly the slice of the
-//! graph it needs and nothing more. Adding a dependency to a handler is always
-//! the same edit: add a `Wired<X>` parameter.
+//! Same convention as `examples/axum.rs`, kept for consumers still on axum 0.7.
+//! Two things differ from the 0.8 examples:
+//!   - axum 0.7's `FromRequestParts` is an `#[async_trait]` (see axum-core), so
+//!     the `Wired<S>` blanket carries the same attribute. The impl still
+//!     compiles cleanly — `Wired` is our own newtype, no coherence clash.
+//!   - Path captures use colon syntax: `/player/:id`, not `/player/{id}`.
 //!
-//! On axum 0.8 `FromRequestParts` is a native `async fn` trait (no
-//! `#[async_trait]`), and the blanket impl over `Wired<S>` compiles cleanly —
-//! `Wired` is our own newtype, so there is no coherence clash with axum's
-//! blankets. See `examples/axum_cqrs.rs` for the same pattern plus CQRS
-//! dispatch via `Handles<C>`, and `examples/axum_07.rs` for the pre-0.8
-//! `#[async_trait]` form.
+//! The crate is pulled in renamed (`axum07 = { package = "axum", version =
+//! "0.7" }`) so 0.7 and 0.8 can coexist in dev-deps; we alias it back to `axum`
+//! here so the body reads as ordinary axum 0.7 code.
 //!
-//! Run: `HEWN_SERVE=1 cargo run --example axum` then `curl localhost:3000/player/7`.
+//! Run: `HEWN_SERVE=1 cargo run --example axum_07` then `curl localhost:3000/player/7`.
+
+use axum07 as axum;
 
 use std::convert::Infallible;
 
@@ -61,13 +61,14 @@ impl PlayerRepo {
 }
 
 // ---------------------------------------------------------------------------
-// The `Wired<S>` extractor: `S::wire(state)` straight from the axum State,
-// which serves as the context. The blanket impl works for every
+// The `Wired<S>` extractor. On axum 0.7 `FromRequestParts` is an
+// `#[async_trait]`, so the blanket carries the attribute. It works for every
 // `S: Wire<State>` without per-service glue.
 // ---------------------------------------------------------------------------
 
 struct Wired<S>(pub S);
 
+#[async_trait::async_trait]
 impl<State, S> FromRequestParts<State> for Wired<S>
 where
     State: Send + Sync,
@@ -101,7 +102,7 @@ async fn main() {
     };
 
     let app: Router = Router::new()
-        .route("/player/{id}", get(get_player))
+        .route("/player/:id", get(get_player))
         .with_state(ctx);
 
     // Serve only when asked; otherwise just prove it wires and type-checks.
@@ -110,6 +111,6 @@ async fn main() {
         axum::serve(listener, app).await.unwrap();
     } else {
         let _ = app;
-        println!("axum example wired; set HEWN_SERVE=1 to actually serve");
+        println!("axum_07 example wired; set HEWN_SERVE=1 to actually serve");
     }
 }

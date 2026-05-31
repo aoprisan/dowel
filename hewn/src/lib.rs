@@ -103,6 +103,10 @@
 //!   satisfied` at the wiring site — that is the intended repair signal.
 //! - `#[wire(skip)]` fields are constructed with [`Default::default`] and get no
 //!   bound. `#[wire(with = path)]` fields call `path(ctx)` and get no bound.
+//!   Because the impl stays generic over `__Ctx`, a `with` provider must be
+//!   generic over the context (`fn make<C>(ctx: &C) -> Field`); any bound it
+//!   needs — e.g. `Seed: Wire<C>` — has to be satisfiable from the struct's own
+//!   wired fields, whose `Field: Wire<__Ctx>` bounds land on the same impl.
 //! - Tuple structs expand identically using positional initializers
 //!   (`Self(<F0 as Wire<__Ctx>>::wire(__ctx), ...)`).
 //!

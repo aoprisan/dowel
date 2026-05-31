@@ -40,7 +40,10 @@ let svc = PlayerService::wire(&ctx);
 ## Field attributes
 
 - `#[wire(skip)]` — construct the field with `Default::default()`; adds no bound.
-- `#[wire(with = path)]` — construct it with `path(ctx)`; adds no bound.
+- `#[wire(with = path)]` — construct it with `path(ctx)`; adds no bound. Keep the
+  service generic over `Ctx`, so the provider is generic too
+  (`fn make<C>(ctx: &C) -> Field`); any bound it needs (e.g. `Seed: Wire<C>`)
+  must come from the struct's own wired fields.
 
 Every plain field type `F` gets a `where F: Wire<Ctx>` bound, so a forgotten leaf
 impl is a compile error at the wiring site:

@@ -40,6 +40,9 @@ let svc = PlayerService::wire(&ctx);
 ## Field attributes
 
 - `#[wire(skip)]` — construct the field with `Default::default()`; adds no bound.
+- `#[wire(default = expr)]` — construct it with `expr`; adds no bound. For a leaf
+  with no `Default` but a known init, e.g.
+  `#[wire(default = Cache::with_capacity(128))]`.
 - `#[wire(with = path)]` — construct it with `path(ctx)`; adds no bound. Keep the
   service generic over `Ctx`, so the provider is generic too
   (`fn make<C>(ctx: &C) -> Field`); any bound it needs (e.g. `Seed: Wire<C>`)
@@ -83,6 +86,29 @@ let repo = PlayerRepo::wire(&ctx);
 - `#[context(skip)]` omits a field (config primitives, or to dodge a duplicate type).
 - Two non-skipped fields of the same type are a compile error — they would produce
   conflicting `Wire` impls; annotate one with `#[context(skip)]` and wire it by hand.
+
+## Wiring an array of services
+
+`[T; N]` is `Wire<Ctx>` whenever `T` is: it wires N independent instances from the
+same context via a monomorphized `core::array::from_fn` — no container, no
+allocation. The homogeneous companion to a tuple struct of distinct fields.
+
+```rust
+use dowel::Wire;
+
+struct Ctx { seed: u32 }
+
+struct Worker { id: u32 }
+impl Wire<Ctx> for Worker {
+    fn wire(ctx: &Ctx) -> Self { Worker { id: ctx.seed } }
+}
+
+let pool: [Worker; 3] = Wire::wire(&Ctx { seed: 7 });
+```
+
+The graph does not deduplicate (rule 5): each element is wired independently, so
+this is N distinct instances. For one shared instance N times, the sharing lives
+in the leaf.
 
 ## axum
 

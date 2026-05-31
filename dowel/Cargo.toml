@@ -24,6 +24,10 @@ async-trait = "0.1"
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 
 [[example]]
+name = "attributes"
+required-features = ["derive"]
+
+[[example]]
 name = "axum"
 required-features = ["derive"]
 

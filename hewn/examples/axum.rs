@@ -6,9 +6,11 @@
 //! graph it needs and nothing more. Adding a dependency to a handler is always
 //! the same edit: add a `Wired<X>` parameter.
 //!
-//! The extractor mirrors axum's own `FromRequestParts`, which is an
-//! `#[async_trait]` (see axum-core); we use the same attribute so the lifetimes
-//! line up (this is the documented coherence/lifetime caveat in CLAUDE.md).
+//! On axum 0.8 `FromRequestParts` is a native `async fn` trait (no
+//! `#[async_trait]`), and the blanket impl over `Wired<S>` compiles cleanly —
+//! `Wired` is our own newtype, so there is no coherence clash with axum's
+//! blankets. See `examples/axum_cqrs.rs` for the same pattern plus CQRS
+//! dispatch via `Handles<C>`.
 //!
 //! Run: `HEWN_SERVE=1 cargo run --example axum` then `curl localhost:3000/player/7`.
 
@@ -65,7 +67,6 @@ impl PlayerRepo {
 
 struct Wired<S>(pub S);
 
-#[async_trait::async_trait]
 impl<State, S> FromRequestParts<State> for Wired<S>
 where
     State: Send + Sync,
@@ -99,7 +100,7 @@ async fn main() {
     };
 
     let app: Router = Router::new()
-        .route("/player/:id", get(get_player))
+        .route("/player/{id}", get(get_player))
         .with_state(ctx);
 
     // Serve only when asked; otherwise just prove it wires and type-checks.

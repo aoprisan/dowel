@@ -90,14 +90,26 @@ async fn get_player(Wired(repo): Wired<PlayerRepo>, Path(id): Path<PlayerId>) ->
 - Before implementing or changing the macro, show the planned token expansion
   first, then implement.
 
+## Settled decisions
+
+- **The `Wired<S>` axum extractor stays an example, not facade code.** Its blanket
+  `FromRequestParts` impl compiles cleanly (verified on axum 0.7 *and* 0.8) — no
+  coherence clash, because `Wired` is our own newtype, so the feared collision
+  with axum's blankets never materializes. We still keep it out of the facade on
+  purpose: vendoring it would add an `axum` (framework) dependency and pin one
+  axum major line, breaking the "facade has zero deps beyond the macro re-export"
+  invariant. The canonical shape lives in `examples/axum.rs` (extractor) and
+  `examples/axum_cqrs.rs` (extractor + CQRS). If a second consumer ever needs it
+  installable, ship it as a separate `hewn-axum` companion crate that owns the
+  axum-version coupling — never the facade.
+
 ## Known-unverified spots (verify with `cargo check`, do not assume)
 
-- The `Wired<S>` axum extractor's blanket `FromRequestParts` impl may collide with
-  axum's own blankets (coherence). If it fights, fall back to calling
-  `S::wire(&ctx)` inside the handler body. Verify before relying on it.
-- Object safety: `async fn` in a `Handles<C>` trait is NOT object-safe. A dynamic
-  bus boundary needs `#[async_trait]` or `Pin<Box<dyn Future>>`. Only relevant if
-  rule 6's bus exception is used.
+- Object safety: `async fn` in a `Handles<C>` trait is NOT object-safe. That is
+  fine for the default CQRS path — `examples/axum_cqrs.rs` dispatches commands by
+  concrete type (`PlayerService: Handles<CreatePlayer>`), which is static and
+  monomorphized. A dynamic bus boundary is the only case that would need
+  `#[async_trait]` or `Pin<Box<dyn Future>>`, and rule 6 says don't default to one.
 - `hewn` name availability on crates.io is unconfirmed. Check before publishing.
 
 ## Tone for this repo

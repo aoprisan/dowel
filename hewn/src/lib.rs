@@ -111,7 +111,9 @@
 //!   (`Self(<F0 as Wire<__Ctx>>::wire(__ctx), ...)`).
 //!
 //! See the crate `README` and `examples/axum.rs` for the `Wired<S>` extractor
-//! pattern used to declare a dependency directly in an axum handler signature.
+//! pattern used to declare a dependency directly in an axum handler signature,
+//! and `examples/axum_cqrs.rs` for that same pattern plus direct CQRS dispatch
+//! through a `Handles<C>` trait (static, monomorphized — no command bus).
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![forbid(unsafe_code)]

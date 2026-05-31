@@ -15,12 +15,15 @@ hewn-macros = { workspace = true }
 
 [dev-dependencies]
 trybuild = "1"
-axum = "0.7"
-async-trait = "0.1"
+axum = "0.8"
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 
 [[example]]
 name = "axum"
+required-features = ["derive"]
+
+[[example]]
+name = "axum_cqrs"
 required-features = ["derive"]
 
 [features]

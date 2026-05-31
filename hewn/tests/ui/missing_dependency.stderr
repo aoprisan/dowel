@@ -1,0 +1,21 @@
+error[E0599]: the function or associated item `wire` exists for struct `PlayerRepo`, but its trait bounds were not satisfied
+  --> tests/ui/missing_dependency.rs:20:29
+   |
+ 8 | struct Db {
+   | --------- doesn't satisfy `Db: Wire<_>`
+...
+14 | struct PlayerRepo {
+   | ----------------- function or associated item `wire` not found for this struct because it doesn't satisfy `PlayerRepo: Wire<_>`
+...
+20 |     let _repo = PlayerRepo::wire(&ctx);
+   |                             ^^^^ function or associated item cannot be called on `PlayerRepo` due to unsatisfied trait bounds
+   |
+   = note: trait bound `Db: Wire<_>` was not satisfied
+note: the trait `Wire` must be implemented
+  --> src/lib.rs
+   |
+   | pub trait Wire<Ctx> {
+   | ^^^^^^^^^^^^^^^^^^^
+   = help: items from traits can only be used if the trait is implemented and in scope
+   = note: the following trait defines an item `wire`, perhaps you need to implement it:
+           candidate #1: `Wire`

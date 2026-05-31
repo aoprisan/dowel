@@ -121,6 +121,11 @@
 //! `examples/axum_cqrs.rs` for that same pattern plus direct CQRS dispatch
 //! through a `Handles<C>` trait (static, monomorphized — no command bus), and
 //! `examples/axum_07.rs` for the pre-0.8 `#[async_trait]` form.
+//!
+//! For the actor model, `examples/actor.rs` (hand-rolled tokio `mpsc`) and
+//! `examples/actix.rs` (Actix) show an actor's address wired as a leaf (rule 5):
+//! the running actor is spawned at the composition root and its clonable handle
+//! is the dependency the graph threads around.
 
 #![no_std]
 #![cfg_attr(docsrs, feature(doc_cfg))]

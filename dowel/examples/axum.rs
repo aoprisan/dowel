@@ -13,7 +13,7 @@
 //! dispatch via `Handles<C>`, and `examples/axum_07.rs` for the pre-0.8
 //! `#[async_trait]` form.
 //!
-//! Run: `HEWN_SERVE=1 cargo run --example axum` then `curl localhost:3000/player/7`.
+//! Run: `DOWEL_SERVE=1 cargo run --example axum` then `curl localhost:3000/player/7`.
 
 use std::convert::Infallible;
 
@@ -105,11 +105,11 @@ async fn main() {
         .with_state(ctx);
 
     // Serve only when asked; otherwise just prove it wires and type-checks.
-    if std::env::var_os("HEWN_SERVE").is_some() {
+    if std::env::var_os("DOWEL_SERVE").is_some() {
         let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
         axum::serve(listener, app).await.unwrap();
     } else {
         let _ = app;
-        println!("axum example wired; set HEWN_SERVE=1 to actually serve");
+        println!("axum example wired; set DOWEL_SERVE=1 to actually serve");
     }
 }

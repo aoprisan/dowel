@@ -122,7 +122,7 @@ async fn get_player(Wired(repo): Wired<PlayerRepo>, Path(id): Path<PlayerId>) ->
   concrete type (`PlayerService: Handles<CreatePlayer>`), which is static and
   monomorphized. A dynamic bus boundary is the only case that would need
   `#[async_trait]` or `Pin<Box<dyn Future>>`, and rule 6 says don't default to one.
-- `dowel` name availability on crates.io is unconfirmed. Check before publishing.
+- `dowel` name is available on crates.io (confirmed). Claim it on first publish.
 
 ## Tone for this repo
 

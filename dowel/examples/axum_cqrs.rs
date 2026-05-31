@@ -13,7 +13,7 @@
 //!     blanket needs no `#[async_trait]`.
 //!   - Path captures use brace syntax: `/player/{name}`, not `/player/:name`.
 //!
-//! Run: `HEWN_SERVE=1 cargo run --example axum_cqrs` then
+//! Run: `DOWEL_SERVE=1 cargo run --example axum_cqrs` then
 //! `curl -X POST localhost:3000/player/ada`.
 
 use std::convert::Infallible;
@@ -144,11 +144,11 @@ async fn main() {
         .with_state(ctx);
 
     // Serve only when asked; otherwise just prove it wires and type-checks.
-    if std::env::var_os("HEWN_SERVE").is_some() {
+    if std::env::var_os("DOWEL_SERVE").is_some() {
         let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
         axum::serve(listener, app).await.unwrap();
     } else {
         let _ = app;
-        println!("axum_cqrs example wired; set HEWN_SERVE=1 to actually serve");
+        println!("axum_cqrs example wired; set DOWEL_SERVE=1 to actually serve");
     }
 }

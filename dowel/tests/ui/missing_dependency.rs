@@ -1,6 +1,6 @@
 // The repair signal: a field whose type has no `Wire<Ctx>` impl must fail to
 // compile with `the trait bound `Db: Wire<AppCtx>` is not satisfied`.
-use hewn::Wire;
+use dowel::Wire;
 
 struct AppCtx;
 

@@ -1,6 +1,6 @@
 // Happy path: a leaf taught to the context, wired up a two-level graph,
 // covering generics along the way.
-use hewn::Wire;
+use dowel::Wire;
 
 struct AppCtx {
     db: Db,

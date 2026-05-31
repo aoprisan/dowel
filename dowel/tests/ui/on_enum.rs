@@ -1,5 +1,5 @@
 // Wire is struct-only; deriving on an enum is a clear error.
-use hewn::Wire;
+use dowel::Wire;
 
 #[derive(Wire)]
 enum Bad {

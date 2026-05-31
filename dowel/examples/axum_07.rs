@@ -11,7 +11,7 @@
 //! "0.7" }`) so 0.7 and 0.8 can coexist in dev-deps; we alias it back to `axum`
 //! here so the body reads as ordinary axum 0.7 code.
 //!
-//! Run: `HEWN_SERVE=1 cargo run --example axum_07` then `curl localhost:3000/player/7`.
+//! Run: `DOWEL_SERVE=1 cargo run --example axum_07` then `curl localhost:3000/player/7`.
 
 use axum07 as axum;
 
@@ -24,7 +24,7 @@ use axum::{
     routing::get,
     Router,
 };
-use hewn::Wire;
+use dowel::Wire;
 
 // ---------------------------------------------------------------------------
 // The leaf and the context. The axum State *is* the context, so the leaf is
@@ -106,11 +106,11 @@ async fn main() {
         .with_state(ctx);
 
     // Serve only when asked; otherwise just prove it wires and type-checks.
-    if std::env::var_os("HEWN_SERVE").is_some() {
+    if std::env::var_os("DOWEL_SERVE").is_some() {
         let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
         axum::serve(listener, app).await.unwrap();
     } else {
         let _ = app;
-        println!("axum_07 example wired; set HEWN_SERVE=1 to actually serve");
+        println!("axum_07 example wired; set DOWEL_SERVE=1 to actually serve");
     }
 }

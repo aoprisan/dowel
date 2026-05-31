@@ -9,6 +9,8 @@ fn ui() {
     t.pass("tests/ui/skip.rs");
     t.pass("tests/ui/with.rs");
     t.pass("tests/ui/tuple.rs");
+    t.pass("tests/ui/context.rs");
     t.compile_fail("tests/ui/missing_dependency.rs");
     t.compile_fail("tests/ui/on_enum.rs");
+    t.compile_fail("tests/ui/context_dup.rs");
 }

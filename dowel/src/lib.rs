@@ -1,4 +1,4 @@
-//! # hewn
+//! # dowel
 //!
 //! Zero-cost compile-time dependency wiring for Rust. One trait, one derive, one
 //! way to express a dependency. There is no container, no `TypeId`, no dynamic
@@ -8,7 +8,7 @@
 //! generates the [`Wire`] impl that wires each field from a context.
 //!
 //! ```
-//! use hewn::Wire;
+//! use dowel::Wire;
 //!
 //! // The composition root owns one concrete context.
 //! struct AppCtx { db: Db }
@@ -36,7 +36,7 @@
 //! threads the same `&ctx` all the way down.
 //!
 //! ```
-//! use hewn::Wire;
+//! use dowel::Wire;
 //!
 //! struct AppCtx { db: Db, clock: Clock }
 //!
@@ -78,17 +78,17 @@
 //! the macro expands to (modulo hygiene):
 //!
 //! ```ignore
-//! impl<__Ctx, T> hewn::Wire<__Ctx> for PlayerService<T>
+//! impl<__Ctx, T> dowel::Wire<__Ctx> for PlayerService<T>
 //! where
-//!     PlayerRepo: hewn::Wire<__Ctx>,
-//!     T: hewn::Wire<__Ctx>,
+//!     PlayerRepo: dowel::Wire<__Ctx>,
+//!     T: dowel::Wire<__Ctx>,
 //! {
 //!     fn wire(__ctx: &__Ctx) -> Self {
 //!         Self {
-//!             repo: <PlayerRepo as hewn::Wire<__Ctx>>::wire(__ctx),
+//!             repo: <PlayerRepo as dowel::Wire<__Ctx>>::wire(__ctx),
 //!             cache: ::core::default::Default::default(), // #[wire(skip)]
 //!             clock: make_clock(__ctx),                   // #[wire(with = ..)]
-//!             extra: <T as hewn::Wire<__Ctx>>::wire(__ctx),
+//!             extra: <T as dowel::Wire<__Ctx>>::wire(__ctx),
 //!         }
 //!     }
 //! }
@@ -116,6 +116,7 @@
 //! through a `Handles<C>` trait (static, monomorphized — no command bus), and
 //! `examples/axum_07.rs` for the pre-0.8 `#[async_trait]` form.
 
+#![no_std]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![forbid(unsafe_code)]
 
@@ -126,7 +127,7 @@
 /// fields are themselves `Wire<Ctx>`.
 ///
 /// ```
-/// use hewn::Wire;
+/// use dowel::Wire;
 ///
 /// struct Ctx { name: String }
 ///
@@ -146,4 +147,38 @@ pub trait Wire<Ctx> {
 }
 
 #[cfg(feature = "derive")]
-pub use hewn_macros::Wire;
+pub use dowel_macros::Wire;
+
+/// Derive [`Wire`] leaf impls for every named field of a context struct.
+///
+/// The composition root owns one concrete context whose fields are the leaf
+/// handles. `#[derive(Context)]` generates, for each field, the
+/// `impl Wire<Ctx> for FieldType` that clones the field out of the context —
+/// exactly the hand-written leaf impl, without the boilerplate.
+///
+/// - `#[context(skip)]` omits a field (config primitives, or to dodge a
+///   duplicate-type collision).
+/// - Two non-skipped fields of the same type are a compile error: they would
+///   produce conflicting `Wire` impls. Annotate one with `#[context(skip)]`.
+///
+/// ```
+/// use dowel::{Wire, Context};
+///
+/// #[derive(Clone)]
+/// struct Db { url: &'static str }
+/// #[derive(Clone, Copy)]
+/// struct Clock;
+///
+/// #[derive(Context)]
+/// struct AppCtx { db: Db, clock: Clock }
+///
+/// #[derive(Wire)]
+/// struct Repo { db: Db, clock: Clock }
+///
+/// let ctx = AppCtx { db: Db { url: "pg://" }, clock: Clock };
+/// let repo = Repo::wire(&ctx);
+/// assert_eq!(repo.db.url, "pg://");
+/// ```
+#[cfg(feature = "derive")]
+pub use dowel_macros::Context;
+

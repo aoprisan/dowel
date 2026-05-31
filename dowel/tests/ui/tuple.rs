@@ -1,5 +1,5 @@
 // Tuple structs wire positionally, and the per-field attributes still apply.
-use hewn::Wire;
+use dowel::Wire;
 
 struct Ctx {
     db: Db,

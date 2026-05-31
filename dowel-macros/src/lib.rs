@@ -1,23 +1,23 @@
-//! Derive macro for the `hewn` dependency-wiring convention.
+//! Derive macro for the `dowel` dependency-wiring convention.
 //!
-//! See the `hewn` crate for the documented expansion. This crate is an
-//! implementation detail; depend on `hewn`, not on `hewn-macros`.
+//! See the `dowel` crate for the documented expansion. This crate is an
+//! implementation detail; depend on `dowel`, not on `dowel-macros`.
 
 use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;
-use quote::quote;
+use quote::{quote, ToTokens};
 use syn::{
     parse_macro_input, parse_quote, Data, DeriveInput, Error, Fields, GenericParam, Path, Type,
 };
 
-/// Derive `hewn::Wire<__Ctx>` for a struct.
+/// Derive `dowel::Wire<__Ctx>` for a struct.
 ///
 /// Each field is wired from the context unless annotated:
 /// - `#[wire(skip)]` — construct with `Default::default()`, add no bound.
 /// - `#[wire(with = path)]` — construct with `path(ctx)`, add no bound.
 ///
-/// Every plain field type `F` gets a `where F: hewn::Wire<__Ctx>` bound, so a
-/// missing leaf impl is a compile error at the wiring site. See the `hewn`
+/// Every plain field type `F` gets a `where F: dowel::Wire<__Ctx>` bound, so a
+/// missing leaf impl is a compile error at the wiring site. See the `dowel`
 /// crate docs for the full expansion.
 #[proc_macro_derive(Wire, attributes(wire))]
 pub fn derive_wire(input: TokenStream) -> TokenStream {
@@ -70,7 +70,7 @@ fn expand(input: DeriveInput) -> Result<TokenStream2, Error> {
             let ty: &Type = &field.ty;
             where_clause
                 .predicates
-                .push(parse_quote!(#ty: ::hewn::Wire<__Ctx>));
+                .push(parse_quote!(#ty: ::dowel::Wire<__Ctx>));
         }
         modes.push(mode);
     }
@@ -94,7 +94,7 @@ fn expand(input: DeriveInput) -> Result<TokenStream2, Error> {
 
     Ok(quote! {
         #[automatically_derived]
-        impl #impl_generics ::hewn::Wire<__Ctx> for #name #ty_generics #where_clause {
+        impl #impl_generics ::dowel::Wire<__Ctx> for #name #ty_generics #where_clause {
             fn wire(__ctx: &__Ctx) -> Self {
                 #body
             }
@@ -128,7 +128,7 @@ fn build_body(fields: &Fields, modes: &[FieldMode]) -> TokenStream2 {
 /// The initializer expression for one field given its mode.
 fn init_expr(ty: &Type, mode: &FieldMode) -> TokenStream2 {
     match mode {
-        FieldMode::Wire => quote!(<#ty as ::hewn::Wire<__Ctx>>::wire(__ctx)),
+        FieldMode::Wire => quote!(<#ty as ::dowel::Wire<__Ctx>>::wire(__ctx)),
         FieldMode::Skip => quote!(::core::default::Default::default()),
         FieldMode::With(path) => quote!(#path(__ctx)),
     }
@@ -175,4 +175,110 @@ fn set_mode(
     }
     *slot = Some(mode);
     Ok(())
+}
+
+
+/// Derive `dowel::Wire<Ctx>` for each named field type of a context struct.
+///
+/// See the `dowel` crate docs for the documented expansion. Generates, per
+/// field, the leaf `impl Wire<Ctx> for FieldType` that clones the field out of
+/// the context. `#[context(skip)]` omits a field; two non-skipped fields of the
+/// same type are a compile error (they would produce conflicting impls).
+#[proc_macro_derive(Context, attributes(context))]
+pub fn derive_context(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+    expand_context(input)
+        .unwrap_or_else(Error::into_compile_error)
+        .into()
+}
+
+fn expand_context(input: DeriveInput) -> Result<TokenStream2, Error> {
+    let fields = match &input.data {
+        Data::Struct(s) => match &s.fields {
+            Fields::Named(named) => &named.named,
+            _ => {
+                return Err(Error::new_spanned(
+                    &input.ident,
+                    "Context can only be derived for structs with named fields",
+                ))
+            }
+        },
+        Data::Enum(e) => {
+            return Err(Error::new_spanned(
+                e.enum_token,
+                "Context can only be derived for structs with named fields",
+            ))
+        }
+        Data::Union(u) => {
+            return Err(Error::new_spanned(
+                u.union_token,
+                "Context can only be derived for structs with named fields",
+            ))
+        }
+    };
+
+    let name = &input.ident;
+    let (_, ty_generics, _) = input.generics.split_for_impl();
+
+    // Detect duplicate leaf types: two fields of the same type would emit two
+    // `impl Wire<Ctx> for T`, a coherence error. Surface a readable message at
+    // the second field instead.
+    let mut seen: std::collections::HashSet<String> = std::collections::HashSet::new();
+    let mut impls = Vec::new();
+
+    for field in fields {
+        if context_skip(field)? {
+            continue;
+        }
+        let ident = field.ident.as_ref().expect("named field has ident");
+        let ty: &Type = &field.ty;
+
+        if !seen.insert(ty.to_token_stream().to_string()) {
+            return Err(Error::new_spanned(
+                ty,
+                "duplicate leaf type in context: two non-skipped fields share this \
+                 type, which would produce conflicting `Wire` impls. Annotate one \
+                 field with `#[context(skip)]` and wire it by hand.",
+            ));
+        }
+
+        // Forward the context's generics, adding a `FieldTy: Clone` bound so a
+        // non-clonable leaf is a readable error (rule 4: leaves are clonable).
+        let mut generics = input.generics.clone();
+        generics
+            .make_where_clause()
+            .predicates
+            .push(parse_quote!(#ty: ::core::clone::Clone));
+        let (impl_generics, _, where_clause) = generics.split_for_impl();
+
+        impls.push(quote! {
+            #[automatically_derived]
+            impl #impl_generics ::dowel::Wire<#name #ty_generics> for #ty #where_clause {
+                fn wire(__ctx: &#name #ty_generics) -> Self {
+                    ::core::clone::Clone::clone(&__ctx.#ident)
+                }
+            }
+        });
+    }
+
+    Ok(quote!(#(#impls)*))
+}
+
+/// Returns whether a field is annotated `#[context(skip)]`.
+fn context_skip(field: &syn::Field) -> Result<bool, Error> {
+    let mut skip = false;
+    for attr in &field.attrs {
+        if !attr.path().is_ident("context") {
+            continue;
+        }
+        attr.parse_nested_meta(|meta| {
+            if meta.path.is_ident("skip") {
+                skip = true;
+                Ok(())
+            } else {
+                Err(meta.error("unknown `context` option; expected `skip`"))
+            }
+        })?;
+    }
+    Ok(skip)
 }

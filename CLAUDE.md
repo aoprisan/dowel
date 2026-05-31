@@ -51,6 +51,16 @@ struct Db { pool: PgPool }
 impl Wire<AppCtx> for Db { fn wire(c: &AppCtx) -> Self { c.db.clone() } }
 ```
 
+Leaves taught in bulk — `#[derive(Context)]` generates one `impl Wire<AppCtx> for
+FieldType` per field (clones the field out). Prefer this over a wall of
+hand-written leaf impls; drop to the hand-written form only for a field that needs
+custom logic:
+```rust
+#[derive(Context)]
+struct AppCtx { db: Db, clock: Clock }
+// `#[context(skip)]` omits a field; two fields of the same type is a compile error.
+```
+
 Service:
 ```rust
 #[derive(Wire)]

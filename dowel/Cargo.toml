@@ -21,7 +21,11 @@ trybuild = "1"
 axum = "0.8"
 axum07 = { package = "axum", version = "0.7" }
 async-trait = "0.1"
-tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "sync"] }
+# Actor examples: `actor` is hand-rolled on tokio `mpsc` (no extra dep beyond
+# the `sync` feature above); `actix` shows the same leaf pattern with a real
+# actor framework, whose `Addr` is the clonable handle the graph wires.
+actix = "0.13"
 
 [[example]]
 name = "attributes"
@@ -37,6 +41,14 @@ required-features = ["derive"]
 
 [[example]]
 name = "axum_07"
+required-features = ["derive"]
+
+[[example]]
+name = "actor"
+required-features = ["derive"]
+
+[[example]]
+name = "actix"
 required-features = ["derive"]
 
 [features]

@@ -7,13 +7,15 @@ use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{quote, ToTokens};
 use syn::{
-    parse_macro_input, parse_quote, Data, DeriveInput, Error, Fields, GenericParam, Path, Type,
+    parse_macro_input, parse_quote, Data, DeriveInput, Error, Expr, Fields, GenericParam, Path,
+    Type,
 };
 
 /// Derive `dowel::Wire<__Ctx>` for a struct.
 ///
 /// Each field is wired from the context unless annotated:
 /// - `#[wire(skip)]` — construct with `Default::default()`, add no bound.
+/// - `#[wire(default = expr)]` — construct with `expr`, add no bound.
 /// - `#[wire(with = path)]` — construct with `path(ctx)`, add no bound.
 ///
 /// Every plain field type `F` gets a `where F: dowel::Wire<__Ctx>` bound, so a
@@ -33,6 +35,8 @@ enum FieldMode {
     Wire,
     /// `Default::default()`, no bound.
     Skip,
+    /// A caller-supplied expression, no bound.
+    Default(Expr),
     /// `path(ctx)`, no bound.
     With(Path),
 }
@@ -130,6 +134,7 @@ fn init_expr(ty: &Type, mode: &FieldMode) -> TokenStream2 {
     match mode {
         FieldMode::Wire => quote!(<#ty as ::dowel::Wire<__Ctx>>::wire(__ctx)),
         FieldMode::Skip => quote!(::core::default::Default::default()),
+        FieldMode::Default(expr) => quote!(#expr),
         FieldMode::With(path) => quote!(#path(__ctx)),
     }
 }
@@ -150,13 +155,20 @@ fn parse_field_mode(field: &syn::Field) -> Result<FieldMode, Error> {
             if meta.path.is_ident("skip") {
                 set_mode(&mut mode, FieldMode::Skip, &meta)?;
                 Ok(())
+            } else if meta.path.is_ident("default") {
+                let value = meta.value()?; // parses the `=`
+                let expr: Expr = value.parse()?;
+                set_mode(&mut mode, FieldMode::Default(expr), &meta)?;
+                Ok(())
             } else if meta.path.is_ident("with") {
                 let value = meta.value()?; // parses the `=`
                 let path: Path = value.parse()?;
                 set_mode(&mut mode, FieldMode::With(path), &meta)?;
                 Ok(())
             } else {
-                Err(meta.error("unknown `wire` option; expected `skip` or `with = path`"))
+                Err(meta.error(
+                    "unknown `wire` option; expected `skip`, `default = expr`, or `with = path`",
+                ))
             }
         })?;
     }
@@ -171,7 +183,9 @@ fn set_mode(
     meta: &syn::meta::ParseNestedMeta,
 ) -> Result<(), Error> {
     if slot.is_some() {
-        return Err(meta.error("conflicting `wire` options; use at most one of `skip` or `with`"));
+        return Err(meta.error(
+            "conflicting `wire` options; use at most one of `skip`, `default`, or `with`",
+        ));
     }
     *slot = Some(mode);
     Ok(())

@@ -7,8 +7,10 @@ fn ui() {
     let t = trybuild::TestCases::new();
     t.pass("tests/ui/pass.rs");
     t.pass("tests/ui/skip.rs");
+    t.pass("tests/ui/default.rs");
     t.pass("tests/ui/with.rs");
     t.pass("tests/ui/tuple.rs");
+    t.pass("tests/ui/array.rs");
     t.pass("tests/ui/context.rs");
     t.compile_fail("tests/ui/missing_dependency.rs");
     t.compile_fail("tests/ui/on_enum.rs");

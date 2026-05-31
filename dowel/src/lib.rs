@@ -102,7 +102,10 @@
 //!   impl therefore surfaces as `the trait bound `Db: Wire<AppCtx>` is not
 //!   satisfied` at the wiring site — that is the intended repair signal.
 //! - `#[wire(skip)]` fields are constructed with [`Default::default`] and get no
-//!   bound. `#[wire(with = path)]` fields call `path(ctx)` and get no bound.
+//!   bound. `#[wire(default = expr)]` fields are constructed with the given
+//!   expression and get no bound — for a leaf with no `Default` but a known init
+//!   (`#[wire(default = Cache::with_capacity(128))]`). `#[wire(with = path)]`
+//!   fields call `path(ctx)` and get no bound.
 //!   Because the impl stays generic over `__Ctx`, a `with` provider must be
 //!   generic over the context (`fn make<C>(ctx: &C) -> Field`); any bound it
 //!   needs — e.g. `Seed: Wire<C>` — has to be satisfiable from the struct's own
@@ -144,6 +147,40 @@
 pub trait Wire<Ctx> {
     /// Build `Self` from `ctx`. This is pure construction — no async, no I/O.
     fn wire(ctx: &Ctx) -> Self;
+}
+
+/// Wire a fixed-size array by wiring each element from the same context.
+///
+/// This is the homogeneous companion to wiring a tuple struct: where a struct
+/// names N distinct dependencies, `[T; N]` wires N copies of the *same* service
+/// type. It expands to a monomorphized [`core::array::from_fn`] — no allocation,
+/// no container, the same zero-cost shape as the derive.
+///
+/// Per rule 5, the graph does not deduplicate: each element is wired
+/// independently, so this yields N distinct instances. If you need one shared
+/// instance N times, the leaf is a clonable handle and the sharing lives there.
+///
+/// ```
+/// use dowel::Wire;
+///
+/// struct Ctx { seed: u32 }
+///
+/// #[derive(PartialEq, Debug)]
+/// struct Worker { id: u32 }
+/// impl Wire<Ctx> for Worker {
+///     fn wire(ctx: &Ctx) -> Self { Worker { id: ctx.seed } }
+/// }
+///
+/// let pool: [Worker; 3] = Wire::wire(&Ctx { seed: 7 });
+/// assert_eq!(pool, [Worker { id: 7 }, Worker { id: 7 }, Worker { id: 7 }]);
+/// ```
+impl<Ctx, T, const N: usize> Wire<Ctx> for [T; N]
+where
+    T: Wire<Ctx>,
+{
+    fn wire(ctx: &Ctx) -> Self {
+        core::array::from_fn(|_| T::wire(ctx))
+    }
 }
 
 #[cfg(feature = "derive")]

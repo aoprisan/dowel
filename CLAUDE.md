@@ -1,7 +1,7 @@
 # CLAUDE.md — `dowel`
 
 Zero-cost compile-time dependency wiring for Rust. This file governs both how
-`dowel` itself is built and how consuming code (e.g. Dead City) must use it.
+`dowel` itself is built and how consuming code must use it.
 
 ## What this crate is
 

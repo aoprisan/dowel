@@ -1,7 +1,7 @@
 # CLAUDE.md — `dowel`
 
 Zero-cost compile-time dependency wiring for Rust. This file governs both how
-`dowel` itself is built and how consuming code (e.g. Dead City) must use it.
+`dowel` itself is built and how consuming code must use it.
 
 ## What this crate is
 
@@ -18,6 +18,24 @@ pub trait Wire<Ctx> {
 
 A service is a struct. Its dependencies are its fields. `#[derive(Wire)]`
 generates the impl that wires each field from the context.
+
+## Wiring is reconstruction, not resolution
+
+`wire` is a constructor, not a container lookup. It runs on **every call** and
+does **not** memoize. There is no cache, no pool, no singleton scope. An axum
+handler taking `Wired<PlayerService>` rebuilds the whole graph per request:
+`PlayerService::wire` → `PlayerRepo::wire` → `Db::wire` → `ctx.db.clone()`. Do
+not assume container-style caching — there is none, and that is the point (rule
+5: the graph never deduplicates).
+
+The cost of that reconstruction is one clone per leaf on the path. With the
+canonical `Arc`/`mpsc::Sender`/`Copy` leaves that is a handful of atomic
+refcount bumps — negligible next to any real work the request does, and it
+scales with graph depth, not with the size of any data. The compiler enforces
+`Clone`, **not** *cheap* `Clone`: a leaf like `struct Db { rows: Vec<Row> }`
+compiles and silently deep-copies per request. Nothing in the type system
+catches that — rule 4 (leaves are clonable *handles*) is the only fence, and it
+is upheld by review, not by a trait bound.
 
 ## The rules (non-negotiable — these are why the crate exists)
 

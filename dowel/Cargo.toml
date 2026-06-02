@@ -26,6 +26,12 @@ tokio = { version = "1", features = ["macros", "rt-multi-thread", "sync"] }
 # the `sync` feature above); `actix` shows the same leaf pattern with a real
 # actor framework, whose `Addr` is the clonable handle the graph wires.
 actix = "0.13"
+# `toolkit` is the "real infrastructure" example: a live sqlx SQLite pool as the
+# `Db` leaf and a `tracing` audit sink behind an actor. `sqlx`'s `SqlitePool` is
+# already an `Arc`-backed clonable handle, so it drops straight into a leaf.
+sqlx = { version = "0.8", default-features = false, features = ["runtime-tokio", "sqlite"] }
+tracing = "0.1"
+tracing-subscriber = "0.3"
 
 [[example]]
 name = "attributes"
@@ -49,6 +55,10 @@ required-features = ["derive"]
 
 [[example]]
 name = "stack"
+required-features = ["derive"]
+
+[[example]]
+name = "toolkit"
 required-features = ["derive"]
 
 [[example]]

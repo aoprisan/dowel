@@ -48,6 +48,10 @@ name = "actor"
 required-features = ["derive"]
 
 [[example]]
+name = "stack"
+required-features = ["derive"]
+
+[[example]]
 name = "actix"
 required-features = ["derive"]
 
